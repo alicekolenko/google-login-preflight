@@ -14,6 +14,6 @@
   "engines": {"node": ">=20"},
   "keywords": ["google-login", "google-identity-services", "preflight", "oauth", "fedcm", "csp", "diagnostics", "cli"],
   "license": "MIT",
-  "repository": {"type": "git", "url": "git+https://github.com/alicekolenko/react-google-login-GIS.git"},
+  "repository": {"type": "git", "url": "git+https://github.com/alicekolenko/google-login-preflight.git"},
   "publishConfig": {"access": "public"}
 }
