@@ -23,12 +23,12 @@ The intended npm package name is **provisional** (`@karmadev/gis-preflight`): it
 | HTTPS / localhost | Whether the page URL is an appropriate secure context |
 | GIS SDK script in initial HTML | Detects one/multiple direct GIS script tags, but not dynamic loading |
 | Deprecated Google Sign-In | Flags visible `gapi.auth2` / `platform.js` usage |
-| Enforcing response CSP | Checks whether relevant GIS resources appear allowed by `script-src`, `frame-src`, `connect-src`, `style-src` and fallbacks; complex policies need manual verification |
+| Enforcing response CSP | Flags common policies that appear to restrict the Google-recommended GIS sources. Some individually listed endpoints can work for a particular flow. |
 | COOP popup compatibility | Warns about `same-origin` when non-FedCM popups need cross-window communication |
 | Permissions-Policy | Warns if `identity-credentials-get` is explicitly disabled |
 | Manual checks | Reminds you to verify Google Cloud origins, redirect URIs, iframe permissions, runtime FedCM status, and backend token verification |
 
-Only HTTP response **headers** and server-delivered **HTML** are inspected. No Google account is accessed; no cookies, tokens or credentials are supplied to the target. The query string is removed from report output. The CLI fetches only a URL you supply, and is best used on a publicly reachable or local development page without authentication.
+Only HTTP response **headers** and server-delivered **HTML** are inspected. No Google account is accessed; no cookies, tokens or credentials are supplied to the target. The query string is removed from report output. The CLI starts at the URL you supply and follows HTTP redirects, including redirects to another host. It uses a 10-second timeout and stops reading successful responses above 2 MB. Use it on a publicly reachable or local development page without authentication.
 
 `--json` outputs a versioned report. By default warnings do not affect the exit status; `--strict` makes warnings fail CI. Exit codes are `0` (no blocking findings), `1` (findings) and `2` (invalid input or request failed).
 
@@ -54,7 +54,7 @@ console.log(report.checks);
 - Even if the SDK script exists, a Google account login may fail because of settings in Google Cloud Console (not accessible to a static scan), user choices, browser behavior, or server logic.
 - `google.accounts.id.initialize()` called multiple times is a real GIS issue, but cannot be reliably detected from HTML alone.
 - COOP `same-origin` is a **conditional warning**, not always a bug; FedCM-driven sign-in can work without changing it.
-- CSP policies with `strict-dynamic`, meta CSP, advanced rewrites and browser-specific behavior require manual verification.
+- CSP policies with nonces, hashes, `strict-dynamic`, encoded source paths, or HTML meta policies require manual verification. The SDK tag check can count inert markup, such as scripts in comments or templates.
 - **Server-side ID token verification is mandatory** for security-critical decisions; never trust profile details obtained solely from browser-side JWT decoding.
 - This is an independent project; not affiliated with or endorsed by Google.
 
@@ -73,6 +73,9 @@ This is a small proof of concept. Contributions should prioritize reliable, non-
 ```sh
 npm test
 npm pack --dry-run
+node --test test/cli.test.js
 ```
+
+The CLI smoke test starts a loopback HTTP server with a GIS-recommended CSP fixture and a restrictive CSP/COOP fixture. It checks normal, strict, JSON, and strict JSON modes.
 
 MIT licensed.
