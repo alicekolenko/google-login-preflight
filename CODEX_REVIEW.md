@@ -1,4 +1,4 @@
-# Codex review brief — Google GIS Preflight
+# Codex review brief — Google Login Preflight
 
 Goal: prove or disprove that this tiny independent web Google Identity Services diagnostic CLI is useful. Keep the scope small. Do NOT build another login SDK.
 

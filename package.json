@@ -1,9 +1,9 @@
 {
-  "name": "@karmadev/gis-preflight",
+  "name": "@karmadev.studio/google-login-preflight",
   "version": "0.1.0",
-  "description": "Dependency-free configuration preflight for Google Identity Services on the web",
+  "description": "Dependency-free CLI for diagnosing Google login configuration issues on the web",
   "type": "module",
-  "bin": {"gis-preflight": "./bin/gis-preflight.js"},
+  "bin": {"google-login-preflight": "bin/google-login-preflight.js"},
   "exports": {".": {"types": "./src/index.d.ts", "default": "./src/index.js"}},
   "types": "./src/index.d.ts",
   "files": ["bin", "src", "README.md", "LICENSE"],
@@ -12,7 +12,7 @@
     "pack:check": "npm pack --dry-run"
   },
   "engines": {"node": ">=20"},
-  "keywords": ["google-identity-services", "google-login", "oauth", "fedcm", "csp", "diagnostics", "cli"],
+  "keywords": ["google-login", "google-identity-services", "preflight", "oauth", "fedcm", "csp", "diagnostics", "cli"],
   "license": "MIT",
   "repository": {"type": "git", "url": "git+https://github.com/alicekolenko/react-google-login-GIS.git"},
   "publishConfig": {"access": "public"}

@@ -1,8 +1,8 @@
-# AGENTS.md — Google GIS Preflight
+# AGENTS.md — Google Login Preflight
 
 ## Role and Goal
 
-You are a senior JavaScript/TypeScript engineer maintaining **Google GIS Preflight**, an
+You are a senior JavaScript/TypeScript engineer maintaining **Google Login Preflight**, an
 experimental, independent npm CLI that diagnoses likely Google Identity Services
 (GIS) integration and configuration problems on web pages.
 
@@ -45,7 +45,7 @@ Priorities:
 
 - Node.js >=20, ESM, npm, with **zero runtime dependencies** unless a concrete
   need is demonstrated and approved.
-- CLI entry point: `bin/gis-preflight.js`.
+- CLI entry point: `bin/google-login-preflight.js`.
 - Public JavaScript API and declarations: `src/index.js`, `src/index.d.ts`.
 - Tests: `test/` using the built-in `node:test` runner.
 - Package metadata and distribution files: `package.json` and its `files` list.
@@ -119,7 +119,7 @@ When reviewing:
 For code changes, run at least:
 - `npm test`
 - `npm pack --dry-run`
-- `node --check bin/gis-preflight.js`
+- `node --check bin/google-login-preflight.js`
 - `node --check src/index.js`
 - `git diff --check`
 

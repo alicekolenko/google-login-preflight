@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-const bin = fileURLToPath(new URL('../bin/gis-preflight.js', import.meta.url));
+const bin = fileURLToPath(new URL('../bin/google-login-preflight.js', import.meta.url));
 const healthyCsp = [
   "default-src 'self'",
   'script-src https://accounts.google.com/gsi/client',
@@ -50,6 +50,7 @@ test('CLI checks healthy and misconfigured local GIS pages', async t => {
             ['csp-script-src', 'csp-frame-src', 'csp-connect-src', 'csp-style-src', 'coop-popup-risk']);
         }
       } else {
+        assert.match(result.stdout, /^Google Login Preflight: /);
         assert.match(result.stdout, new RegExp(`0 errors · ${warnings} warnings`));
         assert.match(result.stdout, /require runtime\/server testing/);
       }

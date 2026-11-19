@@ -1,4 +1,4 @@
-# Google GIS Preflight (experimental MVP)
+# Google Login Preflight (experimental MVP)
 
 A **zero-dependency** command-line preflight for [Google Identity Services (GIS)](https://developers.google.com/identity/gsi/web/guides/overview) sign-in on the web.
 
@@ -9,12 +9,25 @@ A **zero-dependency** command-line preflight for [Google Identity Services (GIS)
 ## Quick start (from this repository)
 
 ```sh
-node bin/gis-preflight.js https://your-domain.example/login
-node bin/gis-preflight.js http://localhost:3000/login --json
-node bin/gis-preflight.js https://your-domain.example/login --strict
+node bin/google-login-preflight.js https://your-domain.example/login
+node bin/google-login-preflight.js http://localhost:3000/login --json
+node bin/google-login-preflight.js https://your-domain.example/login --strict
 ```
 
-The intended npm package name is **provisional** (`@karmadev/gis-preflight`): it is **not published** and npm ownership/availability has **not** been verified. After publication, the CLI can be run through `npx @karmadev/gis-preflight` if that name is available and owned.
+## Run from npm after publication
+
+With Node.js 20 or later, run the CLI without installing it globally:
+
+```sh
+npx @karmadev.studio/google-login-preflight https://your-domain.example/login --strict
+```
+
+To install the CLI globally:
+
+```sh
+npm install --global @karmadev.studio/google-login-preflight
+google-login-preflight https://your-domain.example/login --json
+```
 
 ## Checks performed
 
@@ -35,7 +48,7 @@ Only HTTP response **headers** and server-delivered **HTML** are inspected. No G
 ## Programmatic use
 
 ```js
-import { inspectGoogleIdentityPage, scanGoogleIdentityUrl } from '@karmadev/gis-preflight';
+import { inspectGoogleIdentityPage, scanGoogleIdentityUrl } from '@karmadev.studio/google-login-preflight';
 
 const report = inspectGoogleIdentityPage({
   url: 'https://example.com/login',

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { scanGoogleIdentityUrl } from '../src/index.js';
 
-const usage = `Google GIS Preflight (experimental)
-Usage: gis-preflight <https://your-site.example/login> [--json] [--strict]
+const usage = `Google Login Preflight (experimental)
+Usage: google-login-preflight <https://your-site.example/login> [--json] [--strict]
 
   --json     Structured report suitable for CI
   --strict   Return exit code 1 if warnings are present
@@ -25,7 +25,7 @@ try {
   if (args.includes('--json')) {
     console.log(JSON.stringify(report, null, 2));
   } else {
-    console.log(`Google GIS preflight: ${report.url}`);
+    console.log(`Google Login Preflight: ${report.url}`);
     for (const item of report.checks) {
       console.log(`[${item.severity.toUpperCase()}] ${item.message}`);
       if (item.action) console.log(`  → ${item.action}`);
