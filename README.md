@@ -1,50 +1,78 @@
-# react-google-login-GIS
-npm package for Google signIn using Google Identity Service library
+# Google GIS Preflight (experimental MVP)
 
+A **zero-dependency** command-line preflight for [Google Identity Services (GIS)](https://developers.google.com/identity/gsi/web/guides/overview) sign-in on the web.
 
-## Getting Started with Create React App
+**Why?** Many Google login failures come from environment configuration rather than the login button: CSP, COOP, mismatched origins, unavailable SDK scripts or deprecated integrations. This tool surfaces some of those risks as actionable diagnostics, irrespective of React, Vue, Next.js, or the identity library you choose.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**What it is not:** an OAuth library, a sign-in simulator, a browser automation tool, or a security audit. It cannot inspect Google Cloud Console settings, guarantee OAuth success, diagnose dynamically executed JavaScript, or verify backend ID tokens. Never use it as proof an authentication implementation is secure.
 
-## Available Scripts
+## Quick start (from this repository)
 
-In the project directory, you can run:
+```sh
+node bin/gis-preflight.js https://your-domain.example/login
+node bin/gis-preflight.js http://localhost:3000/login --json
+node bin/gis-preflight.js https://your-domain.example/login --strict
+```
 
-### `npm start`
+The intended npm package name is **provisional** (`@karmadev/gis-preflight`): it is **not published** and npm ownership/availability has **not** been verified. After publication, the CLI can be run through `npx @karmadev/gis-preflight` if that name is available and owned.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Checks performed
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+| Check | What we can infer |
+| --- | --- |
+| HTTPS / localhost | Whether the page URL is an appropriate secure context |
+| GIS SDK script in initial HTML | Detects one/multiple direct GIS script tags, but not dynamic loading |
+| Deprecated Google Sign-In | Flags visible `gapi.auth2` / `platform.js` usage |
+| Enforcing response CSP | Checks whether relevant GIS resources appear allowed by `script-src`, `frame-src`, `connect-src`, `style-src` and fallbacks; complex policies need manual verification |
+| COOP popup compatibility | Warns about `same-origin` when non-FedCM popups need cross-window communication |
+| Permissions-Policy | Warns if `identity-credentials-get` is explicitly disabled |
+| Manual checks | Reminds you to verify Google Cloud origins, redirect URIs, iframe permissions, runtime FedCM status, and backend token verification |
 
-### `npm test`
+Only HTTP response **headers** and server-delivered **HTML** are inspected. No Google account is accessed; no cookies, tokens or credentials are supplied to the target. The query string is removed from report output. The CLI fetches only a URL you supply, and is best used on a publicly reachable or local development page without authentication.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+`--json` outputs a versioned report. By default warnings do not affect the exit status; `--strict` makes warnings fail CI. Exit codes are `0` (no blocking findings), `1` (findings) and `2` (invalid input or request failed).
 
-### `npm run build`
+## Programmatic use
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```js
+import { inspectGoogleIdentityPage, scanGoogleIdentityUrl } from '@karmadev/gis-preflight';
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+const report = inspectGoogleIdentityPage({
+  url: 'https://example.com/login',
+  headers: { 'cross-origin-opener-policy': 'same-origin' },
+  html: '<script src="https://accounts.google.com/gsi/client" async></script>',
+});
+console.log(report.checks);
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+// Or fetch a target page:
+// const liveReport = await scanGoogleIdentityUrl('http://localhost:3000/login');
+```
 
-### `npm run eject`
+## Important limitations
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- A missing SDK tag in server HTML can be normal for client-side dynamic loaders. This is **informational**, not an error.
+- Even if the SDK script exists, a Google account login may fail because of settings in Google Cloud Console (not accessible to a static scan), user choices, browser behavior, or server logic.
+- `google.accounts.id.initialize()` called multiple times is a real GIS issue, but cannot be reliably detected from HTML alone.
+- COOP `same-origin` is a **conditional warning**, not always a bug; FedCM-driven sign-in can work without changing it.
+- CSP policies with `strict-dynamic`, meta CSP, advanced rewrites and browser-specific behavior require manual verification.
+- **Server-side ID token verification is mandatory** for security-critical decisions; never trust profile details obtained solely from browser-side JWT decoding.
+- This is an independent project; not affiliated with or endorsed by Google.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Official references
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- [Google Identity Services overview](https://developers.google.com/identity/gsi/web/guides/overview)
+- [Google Identity Services setup, CSP and COOP](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid)
+- [GIS JavaScript API](https://developers.google.com/identity/gsi/web/reference/js-reference)
+- [Migration to FedCM](https://developers.google.com/identity/gsi/web/guides/fedcm-migration)
+- [Chrome FedCM troubleshooting tools](https://developer.chrome.com/docs/identity/fedcm/setup)
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Contributing
 
-## Learn More
+This is a small proof of concept. Contributions should prioritize reliable, non-invasive diagnostics with actionable output, test fixtures, and an explicit distinction between **confirmed** and **possible** problems. No analytics or telemetry.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```sh
+npm test
+npm pack --dry-run
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+MIT licensed.
