@@ -1,49 +1,50 @@
-# Google Login Preflight (experimental MVP)
+# Google Login Preflight
 
-A **zero-dependency** command-line preflight for [Google Identity Services (GIS)](https://developers.google.com/identity/gsi/web/guides/overview) sign-in on the web.
+Google sign-in can fail when a page’s headers block the Google Identity Services (GIS) SDK or interfere with a popup. Google Login Preflight checks those headers and the initial HTML for common configuration issues. It’s a zero-dependency CLI that works with any web framework.
 
-**Why?** Many Google login failures come from environment configuration rather than the login button: CSP, COOP, mismatched origins, unavailable SDK scripts or deprecated integrations. This tool surfaces some of those risks as actionable diagnostics, irrespective of React, Vue, Next.js, or the identity library you choose.
+## Quick start
 
-**What it is not:** an OAuth library, a sign-in simulator, a browser automation tool, or a security audit. It cannot inspect Google Cloud Console settings, guarantee OAuth success, diagnose dynamically executed JavaScript, or verify backend ID tokens. Never use it as proof an authentication implementation is secure.
-
-## Quick start (from this repository)
+With Node.js 20 or later, run this from your application’s directory. Replace the URL with your deployed login page or local development server.
 
 ```sh
-node bin/google-login-preflight.js https://your-domain.example/login
-node bin/google-login-preflight.js http://localhost:3000/login --json
-node bin/google-login-preflight.js https://your-domain.example/login --strict
+npx @karmadev.studio/google-login-preflight http://127.0.0.1:3000/login
 ```
 
-## Run from npm after publication
+Add `--json` for a versioned, machine-readable report or `--strict` to make warnings fail CI. Exit codes are `0` for no blocking findings, `1` for errors or warnings in strict mode, and `2` for invalid input or a failed request.
 
-With Node.js 20 or later, run the CLI without installing it globally:
+To install globally, run `npm install --global @karmadev.studio/google-login-preflight`, then use `google-login-preflight <url>`. From this repository’s checkout, use `node bin/google-login-preflight.js <url>`.
 
-```sh
-npx @karmadev.studio/google-login-preflight https://your-domain.example/login --strict
+### Example output (excerpt)
+
+A local test page with the GIS SDK tag and `Cross-Origin-Opener-Policy: same-origin` produced these lines:
+
+```text
+[PASS] GIS SDK script is present in the server-delivered HTML.
+[WARN] COOP same-origin can break non-FedCM Google login / authorization popups.
+  → If using popups that need cross-window communication, review same-origin-allow-popups. FedCM sign-in may not need this change.
 ```
 
-To install the CLI globally:
+## What the CLI checks
 
-```sh
-npm install --global @karmadev.studio/google-login-preflight
-google-login-preflight https://your-domain.example/login --json
-```
-
-## Checks performed
-
-| Check | What we can infer |
+| Check | What the report tells you |
 | --- | --- |
-| HTTPS / localhost | Whether the page URL is an appropriate secure context |
-| GIS SDK script in initial HTML | Detects one/multiple direct GIS script tags, but not dynamic loading |
-| Deprecated Google Sign-In | Flags visible `gapi.auth2` / `platform.js` usage |
-| Enforcing response CSP | Flags common policies that appear to restrict the Google-recommended GIS sources. Some individually listed endpoints can work for a particular flow. |
-| COOP popup compatibility | Warns about `same-origin` when non-FedCM popups need cross-window communication |
-| Permissions-Policy | Warns if `identity-credentials-get` is explicitly disabled |
-| Manual checks | Reminds you to verify Google Cloud origins, redirect URIs, iframe permissions, runtime FedCM status, and backend token verification |
+| HTTPS or loopback URL | Whether the URL uses HTTPS or a recognized local development origin |
+| GIS SDK tag | Whether the initial HTML contains a direct SDK tag or apparent duplicates |
+| Deprecated Google Sign-In | Whether the HTML contains possible `gapi.auth2` or `platform.js` references |
+| Enforcing response CSP | Whether common policy rules appear to restrict Google’s recommended GIS sources. Endpoint-specific allowlists may work for some flows. |
+| COOP | Whether `same-origin` could interfere with non-FedCM popups that need cross-window communication |
+| Permissions-Policy | Whether the response explicitly disables `identity-credentials-get` |
 
-Only HTTP response **headers** and server-delivered **HTML** are inspected. No Google account is accessed; no cookies, tokens or credentials are supplied to the target. The query string is removed from report output. The CLI starts at the URL you supply and follows HTTP redirects, including redirects to another host. It uses a 10-second timeout and stops reading successful responses above 2 MB. Use it on a publicly reachable or local development page without authentication.
+The CLI inspects HTTP response headers and server-delivered HTML. It follows redirects, including to another host, uses a 10-second timeout, and stops reading successful responses above 2 MB. It fetches without credentials, cookies, or tokens and omits query strings from the report. Use a publicly reachable or local page that does not require authentication.
 
-`--json` outputs a versioned report. By default warnings do not affect the exit status; `--strict` makes warnings fail CI. Exit codes are `0` (no blocking findings), `1` (findings) and `2` (invalid input or request failed).
+## What to verify manually
+
+- **In the browser**, check that the SDK loads, GIS initializes as intended, and the relevant popup or FedCM flow works with the browser’s settings and iframe permissions. Dynamic loading can explain an informational missing-tag finding. Inert markup such as comments or templates can count toward the tag check. A static scan cannot reliably detect repeated `google.accounts.id.initialize()` calls.
+- **For CSP**, confirm the actual browser requests when policies use nonces, hashes, `strict-dynamic`, encoded paths, or HTML meta tags.
+- **In Google Cloud Console**, verify the authorized JavaScript origins and any redirect URIs against your deployed configuration.
+- **On the server**, verify ID tokens before making security-critical decisions. Browser-side decoding alone does not verify a token.
+
+A clean report covers the static checks above. Sign-in success and application security require browser and server validation. This project is independent of Google.
 
 ## Programmatic use
 
@@ -60,16 +61,6 @@ console.log(report.checks);
 // Or fetch a target page:
 // const liveReport = await scanGoogleIdentityUrl('http://localhost:3000/login');
 ```
-
-## Important limitations
-
-- A missing SDK tag in server HTML can be normal for client-side dynamic loaders. This is **informational**, not an error.
-- Even if the SDK script exists, a Google account login may fail because of settings in Google Cloud Console (not accessible to a static scan), user choices, browser behavior, or server logic.
-- `google.accounts.id.initialize()` called multiple times is a real GIS issue, but cannot be reliably detected from HTML alone.
-- COOP `same-origin` is a **conditional warning**, not always a bug; FedCM-driven sign-in can work without changing it.
-- CSP policies with nonces, hashes, `strict-dynamic`, encoded source paths, or HTML meta policies require manual verification. The SDK tag check can count inert markup, such as scripts in comments or templates.
-- **Server-side ID token verification is mandatory** for security-critical decisions; never trust profile details obtained solely from browser-side JWT decoding.
-- This is an independent project; not affiliated with or endorsed by Google.
 
 ## Official references
 
