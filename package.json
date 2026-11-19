@@ -1,6 +1,6 @@
 {
   "name": "@karmadev.studio/google-login-preflight",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Dependency-free CLI for diagnosing Google login configuration issues on the web",
   "type": "module",
   "bin": {"google-login-preflight": "bin/google-login-preflight.js"},
